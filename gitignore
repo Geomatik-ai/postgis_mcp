@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# secrets
+.env
+*.local.yaml
+
+# OSM downloads (large, don't commit)
+*.osm.pbf
+*.osm
+
+# OS
+.DS_Store
