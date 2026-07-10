@@ -1,0 +1,21 @@
+services:
+  postgis:
+    build: .
+    container_name: disaster_sentinel_db
+    environment:
+      POSTGRES_DB: gis
+      POSTGRES_USER: gis_admin
+      POSTGRES_PASSWORD: change_me_locally
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gis_admin -d gis"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgis_data:
