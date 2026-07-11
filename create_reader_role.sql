@@ -1,4 +1,4 @@
--- sql/create_reader_role.sql
+-- create_reader_role.sql
 
 -- 1. Create the login itself.
 --    Why LOGIN? A role without LOGIN can't be connected to directly --
