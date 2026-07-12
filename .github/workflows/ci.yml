@@ -8,6 +8,32 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+
+    # A "service" spins up a real, disposable container alongside this job --
+    # not mocked, an actual PostGIS instance the tests connect to over the
+    # network, torn down automatically when the job ends. Reachable at
+    # localhost because ports below are mapped onto the runner itself.
+    services:
+      postgis:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: gis
+          POSTGRES_USER: gis_admin
+          # CI-only, throwaway credentials -- this container is destroyed the
+          # moment the job ends, so there's nothing real to protect here.
+          # Never reuse this value anywhere outside CI.
+          POSTGRES_PASSWORD: ci_admin_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U gis_admin -d gis"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      GIS_READER_PASSWORD: ci_reader_password   # same idea: CI-only, disposable
+
     steps:
       - uses: actions/checkout@v4
 
@@ -22,6 +48,20 @@ jobs:
 
       - name: Lint
         run: uv run ruff check .
+
+      - name: Install postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Create minimal test schema
+        run: |
+          PGPASSWORD=ci_admin_password psql -h localhost -U gis_admin -d gis \
+            -f tests/fixtures/test_schema.sql
+
+      - name: Create read-only role
+        run: |
+          PGPASSWORD=ci_admin_password psql -h localhost -U gis_admin -d gis \
+            -v reader_password="$GIS_READER_PASSWORD" \
+            -f create_reader_role.sql
 
       - name: Run tests
         run: uv run pytest -v
