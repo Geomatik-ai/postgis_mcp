@@ -6,7 +6,8 @@
 --    [FILL IN] the password -- and think about where it should come from.
 --    Should it be typed directly into this file? (Hint: this file will
 --    live in git. What's a safer place for a real password to live?)
-CREATE ROLE gis_reader WITH LOGIN PASSWORD 'dbreader@1234';
+-- password = 'dbreader@1234'
+CREATE ROLE gis_reader WITH LOGIN PASSWORD :'reader_password';
 
 -- 2. Cap how long any single query from this role is allowed to run.
 --    Why here, on the ROLE, rather than just in application code?
