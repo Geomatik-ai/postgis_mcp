@@ -1,6 +1,11 @@
+import os
+import sys
+
 import pytest
 
 from server import describe_table, get_schema
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 @pytest.fixture
@@ -52,7 +57,8 @@ def test_describe_table(monkeypatch, mock_postgis_data):
     # Mock the run_read_query function to return filtered mock data
     def mock_run_read_query(query, params):
         table_name = params[0]
-        return [row for row in mock_postgis_data if row["table_name"] == table_name]
+        return
+        [row for row in mock_postgis_data if row["table_name"] == table_name]
 
     monkeypatch.setattr("server.run_read_query", mock_run_read_query)
 
