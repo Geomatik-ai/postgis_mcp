@@ -28,7 +28,6 @@ can't do damage through this connection.
 **Planned / in progress:**
 | Tool | Purpose | Status |
 |---|---|---|
-| `get_schema` / `describe_table` | Let the agent see tables, columns, geometry types before querying | Issue #2 |
 | `run_spatial_query` | Execute agent-generated SQL safely (validated, capped, timed out) | Issue #3 |
 | `geocode_place` | Resolve a place name to coordinates | Issue #4 |
 
@@ -60,7 +59,9 @@ cp .env.example .env                # then edit .env with your own local values
 Then create the read-only role (see **known gap** below — this should become
 part of `setup.sh` itself):
 ```bash
-docker compose exec -T postgis psql -U gis_admin -d gis < create_reader_role.sql
+GIS_READER_PASSWORD=$(grep GIS_READER_PASSWORD .env | cut -d= -f2 | tr -d "' ") && \
+docker compose exec -T postgis psql -U gis_admin -d gis \
+  -v reader_password="$GIS_READER_PASSWORD" < create_reader_role.sql
 ```
 
 Confirm everything works:
@@ -74,7 +75,7 @@ uv run pytest -v
 |---|---|---|
 | Region and data date | `SNAPSHOT` / `PUNJAB_BBOX` in `setup.sh` | Load a different region, or refresh to newer data |
 | Local passwords | `.env` (never commit -- already gitignored) | Your own local secrets |
-| Reader role password | `create_reader_role.sql` | Must match `.env`'s `GIS_READER_PASSWORD` exactly |
+| Reader role password | `.env` → `GIS_READER_PASSWORD` | Passed to psql at role-creation time; never hardcoded in SQL |
 | Table/column names | query templates (Issue #5+) | Only if you're not using the classic (non-flex) `osm2pgsql` schema |
 
 ## What to expect once set up
