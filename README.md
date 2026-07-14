@@ -30,7 +30,7 @@ can't do damage through this connection.
 | `get_schema` | Return all tables, columns, and geometry types in the database | Done |
 | `describe_table` | Return column detail for a single table | Done |
 | `run_spatial_query` | Execute agent-generated SQL safely (validated, capped, timed out) | Done |
-| `geocode_place` | Resolve a place name to coordinates | Issue #7 |
+| `geocode_place` | Resolve a place name to coordinates | Done |
 
 This project originated as the geospatial-query foundation for a larger
 multi-agent disaster-monitoring system, but is designed to be useful on its own
