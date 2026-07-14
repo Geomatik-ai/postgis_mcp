@@ -1,8 +1,9 @@
 from collections import defaultdict
 
 from mcp.server.fastmcp import FastMCP
+from psycopg.rows import dict_row
 
-from db import run_read_query
+from db import get_connection, run_read_query
 
 mcp = FastMCP("PostGIS")
 
@@ -99,6 +100,29 @@ def describe_table(table_name: str) -> list[dict]:
         )
 
     return results
+
+
+@mcp.tool()
+def run_spatial_query(sql: str) -> list[dict]:
+    """
+    Execute a read-only spatial SQL query against the PostGIS
+    database and return the results as a list of rows.
+
+    Use this after calling get_schema or describe_table to run
+    a query you have constructed. Only SELECT statements are
+    permitted. Results are capped at 100 rows — use LIMIT in
+    your query if you need fewer.
+    """
+    if not sql.strip().lower().startswith("select"):
+        raise ValueError("Only SELECT queries are allowed")
+
+    wrapped = f"SELECT * FROM ({sql}) AS _q LIMIT 100"
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(wrapped)
+            rows = cur.fetchall()
+
+    return rows
 
 
 if __name__ == "__main__":
