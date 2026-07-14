@@ -107,6 +107,23 @@ def test_timeout_is_set(monkeypatch):
     assert captured["timeout"] is not None
 
 
+def test_http_error_propagates(monkeypatch):
+    """HTTP errors (429, 500) must propagate — not silently return empty data."""
+    import httpx
+
+    mock_response = MagicMock()
+    mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+        "429 Too Many Requests",
+        request=MagicMock(),
+        response=MagicMock(),
+    )
+
+    monkeypatch.setattr("server.httpx.get", lambda *_a, **_kw: mock_response)
+
+    with pytest.raises(httpx.HTTPStatusError):
+        geocode_place("Ludhiana")
+
+
 # ─────────────────────────────────────────────
 # Integration tests (real Nominatim network call)
 # ─────────────────────────────────────────────

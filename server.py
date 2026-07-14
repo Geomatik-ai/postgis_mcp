@@ -139,6 +139,7 @@ def geocode_place(place_name: str) -> dict:
     headers = {"User-Agent": "GeoWatch/0.1 (geowatch@geomatik.ai)"}
 
     response = httpx.get(url, params=params, headers=headers, timeout=10.0)
+    response.raise_for_status()
     data = response.json()
     if not data:
         raise ValueError(f"No results found for place name: {place_name}")
