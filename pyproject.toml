@@ -12,6 +12,7 @@ dependencies = [
     "ruff==0.15.20",
     "mcp",
     "flake8>=7.3.0",
+    "httpx>=0.27"
 ]
 
 [dependency-groups]
@@ -31,6 +32,9 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "integration: marks tests that require external services (deselect with '-m not integration')",
+]
 
 [tool.uv]
 package = false

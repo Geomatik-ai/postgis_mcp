@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import httpx
 from mcp.server.fastmcp import FastMCP
 from psycopg.rows import dict_row
 
@@ -123,6 +124,30 @@ def run_spatial_query(sql: str) -> list[dict]:
             rows = cur.fetchall()
 
     return rows
+
+
+@mcp.tool()
+def geocode_place(place_name: str) -> dict:
+    """
+    Geocode a place name to latitude and longitude using the
+    Nominatim API (OpenStreetMap). Returns a dict with lat, lon,
+    and display_name. Call this when you have a place name from
+    the user and need coordinates to use in a spatial query.
+    """
+    url = "https://nominatim.openstreetmap.org/search"
+    params = {"q": place_name, "format": "json", "limit": 1}
+    headers = {"User-Agent": "GeoWatch/0.1 (geowatch@geomatik.ai)"}
+
+    response = httpx.get(url, params=params, headers=headers, timeout=10.0)
+    data = response.json()
+    if not data:
+        raise ValueError(f"No results found for place name: {place_name}")
+    result = data[0]
+    return {
+        "lat": float(result["lat"]),
+        "lon": float(result["lon"]),
+        "display_name": result["display_name"],
+    }
 
 
 if __name__ == "__main__":
