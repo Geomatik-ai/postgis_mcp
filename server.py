@@ -4,7 +4,7 @@ from mcp.server.fastmcp import FastMCP
 
 from db import run_read_query
 
-mcp = FastMCP("POSTGIS")
+mcp = FastMCP("PostGIS")
 
 
 @mcp.tool()
@@ -57,9 +57,12 @@ def get_schema() -> dict[str, list[dict]]:
 @mcp.tool()
 def describe_table(table_name: str) -> list[dict]:
     """
-    get the description of the table with columns and their types
 
+    Returns column-level detail for a single named table: column names, data
+    types, and geometry type/SRID for any spatial columns. Call this after
+    get_schema to zoom into a specific table before writing a query against it.
     """
+
     query = """
     SELECT
         c.table_name ,
