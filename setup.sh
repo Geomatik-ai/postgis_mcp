@@ -9,7 +9,8 @@
 #   4. Verifies the download against Geofabrik's published MD5 checksum
 #   5. Clips the Punjab region out of the Northern Zone file
 #   6. Loads Punjab into PostGIS (skipped if data already loaded — use FORCE=1 to reload)
-#   7. Runs a verification query to PROVE the pipeline worked
+#   7. Creates the read-only gis_reader role (skipped if it already exists)
+#   8. Runs a verification query to PROVE the pipeline worked
 #
 # To update the team's data version: bump SNAPSHOT below, commit, everyone reruns
 # with FORCE=1. Then regenerate eval ground truth (bind_examples.py + generate_golden.py),
@@ -21,6 +22,15 @@
 # If a pinned URL ever 404s, move to the nearest surviving dated file.
 
 set -euo pipefail   # stop immediately on any error, undefined variable, or failed pipe
+
+# Load .env if present, so GIS_READER_PASSWORD (and anything else) is available
+# to this script exactly the way python-dotenv makes it available to db.py.
+if [ -f .env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+fi
 
 # ---------------- configuration (the ONLY things you should need to edit) ----------------
 SNAPSHOT="260701"                                  # YYMMDD — Geofabrik dated snapshot to pin
@@ -127,7 +137,23 @@ else
     "$PUNJAB_FILE"
 fi
 
-# ---- 7. verify with a real query ---------------------------------------------------------
+# ---- 7. create the read-only gis_reader role (idempotent: skips if it exists) ------------
+role_exists=$(docker compose exec -T "$COMPOSE_SERVICE" \
+  psql -U "$DB_USER" -d "$DB_NAME" -tAc "SELECT 1 FROM pg_roles WHERE rolname='gis_reader';")
+
+if [ "$role_exists" = "1" ]; then
+  log "gis_reader role already exists — skipping creation"
+  log "(default privileges already ensure it can read tables recreated by future reloads)"
+else
+  : "${GIS_READER_PASSWORD:?GIS_READER_PASSWORD not set. Copy .env.example to .env and set it before running setup.sh}"
+  log "Creating read-only gis_reader role"
+  docker compose exec -T "$COMPOSE_SERVICE" \
+    psql -U "$DB_USER" -d "$DB_NAME" -v reader_password="$GIS_READER_PASSWORD" \
+    < create_reader_role.sql
+  log "gis_reader role created"
+fi
+
+# ---- 8. verify with a real query ---------------------------------------------------------
 log "Verification: hospitals within 5km of Ludhiana Junction"
 docker compose exec -T "$COMPOSE_SERVICE" psql -U "$DB_USER" -d "$DB_NAME" -c "
   SELECT p.name,
