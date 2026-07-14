@@ -57,8 +57,8 @@ def test_describe_table(monkeypatch, mock_postgis_data):
     # Mock the run_read_query function to return filtered mock data
     def mock_run_read_query(query, params):
         table_name = params[0]
-        return
-        [row for row in mock_postgis_data if row["table_name"] == table_name]
+        filtered = [row for row in mock_postgis_data if row["table_name"] == table_name]
+        return filtered
 
     monkeypatch.setattr("server.run_read_query", mock_run_read_query)
 
