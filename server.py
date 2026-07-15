@@ -113,6 +113,7 @@ def run_spatial_query(sql: str) -> list[dict]:
     permitted. Results are capped at 100 rows — use LIMIT in
     your query if you need fewer.
     """
+    sql = sql.strip().strip("`")
     if not sql.strip().lower().startswith("select"):
         raise ValueError("Only SELECT queries are allowed")
 
